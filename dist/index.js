@@ -6555,6 +6555,51 @@ module.exports.implForWrapper = function (wrapper) {
 
 /***/ }),
 
+/***/ 4315:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const fetch = __nccwpck_require__(467);
+
+module.exports = function release(
+    env,
+    app,
+    bakePercentage,
+    versionToRelease,
+    currentVersion,
+    author,
+    slackChannel,
+    circlecitoken
+) {
+    return fetch(
+        'https://circleci.com/api/v2/project/gh/eventbrite/eb-ui/pipeline',
+        {
+          method: 'POST',
+          headers: {
+              'Circle-Token': circlecitoken,
+              'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+              parameters: {
+                  release_environment: env,
+                  release_author: author,
+                  release_data: JSON.stringify([
+                      {
+                          name: app,
+                          versionToRelease,
+                          currentVersion,
+                          bakePercentage: bakePercentage + '',
+                          slackChannel,
+                      },
+                  ]),
+              },
+          }),
+      }
+    ).then(r => r.json())
+}
+
+
+/***/ }),
+
 /***/ 2877:
 /***/ ((module) => {
 
@@ -6733,9 +6778,7 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 const core = __nccwpck_require__(2186);
-const fetch = __nccwpck_require__(467);
-
-//const github = require('@actions/github');
+const release = __nccwpck_require__(4315);
 
 try {
   const circlecitoken = core.getInput('circlecitoken');
@@ -6747,73 +6790,19 @@ try {
   const author = core.getInput('author');
   const slackChannel = core.getInput('slackChannel');
 
-  console.log('Release params',{
-      circlecitoken,
-      env,
-      app,
-      versionToRelease,
-      bakePercentage,
-      currentVersion,
-      author,
-      slackChannel
-  });
-
-  console.log('Requesting the release to CircleCI')
+  console.log('Requesting the release to CircleCI...')
   
   release(env, app, bakePercentage, versionToRelease, currentVersion,author,slackChannel, circlecitoken).then(r => {
-    console.log('request done');
-    r.text().then((text)=>{
-      console.log('text:', text)
-      core.setOutput("result", 'deployed');
-    })
+    console.log('Response:', r);
+    console.log('https://app.circleci.com/pipelines/github/eventbrite/eb-ui/' + r.number)
+    core.setOutput("result", 'deployed');
   }).catch((e)=>{
-    console.log('ERROR http request:', e);
-    core.setFailed('Circle CI HTTP request failed:', e);
+    console.log('Error:', e);
+    core.setFailed('Circle CI HTTP request failed:' +  e);
   });
+  
 } catch (error) {
   core.setFailed(error.message);
-}
-
-function release(
-    env,
-    app,
-    bakePercentage,
-    versionToRelease,
-    currentVersion,
-    author,
-    slackChannel,
-    circlecitoken
-) {
-
-    const params = {
-      method: 'post',
-      headers: {
-          'Circle-Token': circlecitoken,
-          'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-          parameters: {
-              release_environment: env,
-              release_author: author,
-              release_data: JSON.stringify([
-                  {
-                      name: app,
-                      versionToRelease,
-                      currentVersion,
-                      bakePercentage: bakePercentage + '',
-                      slackChannel,
-                  },
-              ]),
-          },
-      }),
-  };
-
-    console.log('fetch params', params);
-
-    return fetch(
-        'https://circleci.com/api/v2/project/gh/eventbrite/eb-ui/pipeline',
-       params
-    );
 }
 
 })();
