@@ -1,0 +1,57 @@
+name: Release to PROD/QA CircleCI
+
+on:
+  workflow_dispatch:
+    inputs:
+      circlecitoken:
+        description: 'Circle CI Token with permissions to run eb-ui pipeline'
+        default: ''
+        required: true
+      env:  
+        description: 'Environment'
+        required: true
+        default: 'production' # qa | prod
+      app:
+        description: 'EB-UI application name'
+        required: true
+        default: 'digital-content'
+      versionToRelease:
+        description: 'EB-UI application version to release'
+        required: true
+        default: '6.18.3'
+      bakePercentage: 
+        description: 'Application version traffic allocation percentage'
+        required: true
+        default: '5' # 100 | 50 | 25 | 10 | 5
+      currentVersion:
+        description: 'EB-UI application current version'
+        required: true
+        default: '6.18.3'
+      author: 
+        description: 'Release author'
+        required: true
+        default: 'carlosb'
+      slackChannel:
+        description: 'Author team slack channel name'
+        required: true
+        default: '#listings-build'
+jobs:
+  release_through_circle_ci:
+    runs-on: ubuntu-latest
+    name: Deploy EB-UI application through Circle CI
+    steps:
+      - name: Deploy through circle ci
+        id: circle-ci
+        uses: carlosb-eb/launch-circle-ci-release-poc
+        with:
+          circlecitoken: ${{ github.event.inputs.circlecitoken }}
+          env:  ${{ github.event.inputs.env }}
+          app: ${{ github.event.inputs.app }}
+          versionToRelease: ${{ github.event.inputs.versionToRelease }}
+          bakePercentage: ${{ github.event.inputs.bakePercentage }}
+          currentVersion: ${{ github.event.inputs.currentVersion }}
+          author: ${{ github.event.inputs.author }}
+          slackChannel: ${{ github.event.inputs.slackChannel }}
+      # Use the output from the `hello` step
+      - name: Get the output time
+        run: echo "The time was ${{ steps.hello.outputs.time }}"
