@@ -3,10 +3,6 @@ name: Release to PROD/QA CircleCI
 on:
   workflow_dispatch:
     inputs:
-      circlecitoken:
-        description: 'Circle CI Token with permissions to run eb-ui pipeline'
-        default: ''
-        required: true
       env:  
         description: 'Environment'
         required: true
@@ -44,7 +40,7 @@ jobs:
         id: circle-ci
         uses: carlosb-eb/launch-circle-ci-release-poc@v1.1
         with:
-          circlecitoken: ${{ github.event.inputs.circlecitoken }}
+          circlecitoken: ${{ secrets.CIRCLE_CI_TOKEN }}
           env:  ${{ github.event.inputs.env }}
           app: ${{ github.event.inputs.app }}
           versionToRelease: ${{ github.event.inputs.versionToRelease }}
