@@ -21,15 +21,20 @@ try {
   release(env, app, bakePercentage, versionToRelease, currentVersion,author,slackChannel, circlecitoken).then(r => {
     console.log('Response:', r);
     core.setOutput("deployed", 'done');
-
+    console.log('cache clear: ', clearCache)
     if(clearCache){
+      console.log('waiting CircleCI workflow end');
       waitToWorkflowEnd(r.id, circlecitoken).then(r => {
+        console.log(' CircleCI workflow finished');
+
         clearTrafficAllocationCache(app,EB_API_KEY).then(()=>{
           core.setOutput("cacheclear", 'done');
         }).catch(()=>{
           core.setFailed('EB API call to clear traffic allocation cache failed:' +  e);
         })
-      });
+      }).catch((e)=>{
+        console.log(' CircleCI workflow ERROR: ', e);
+      })
     }else{
       core.setOutput("cacheclear", 'not done');
     }
