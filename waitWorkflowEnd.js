@@ -16,9 +16,9 @@ module.exports = function waitToWorkflowEnd(id, circlecitoken, secondsToRequestS
         },
     }).then(r => r.json()).then((response)=>{
       console.log('response: ', response);
-      const r = response.items[0];
+      const r = response.items[0] || { status: 'running'};
       
-      if((finished_statuses.includes(r.status)) || MAX_REQUESTS_LIMIT === 0){ 
+      if(finished_statuses.includes(r.status) || MAX_REQUESTS_LIMIT === 0){ 
         return r.status;
       }
       return new Promise((resolve, reject)=>{
