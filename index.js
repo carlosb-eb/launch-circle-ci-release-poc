@@ -20,9 +20,8 @@ try {
   
   release(env, app, bakePercentage, versionToRelease, currentVersion,author,slackChannel, circlecitoken).then(r => {
     console.log('Response:', r);
-    core.setOutput("deployed", 'done');
     console.log('cache clear: ', clearCache)
-    if(clearCache){
+    if(clearCache==="true"){
       console.log('waiting CircleCI workflow end');
       waitToWorkflowEnd(r.id, circlecitoken).then(r => {
         console.log(' CircleCI workflow finished');
@@ -34,7 +33,7 @@ try {
         })
       }).catch((e)=>{
         console.log(' CircleCI workflow ERROR: ', e);
-      })
+      });
     }else{
       core.setOutput("cacheclear", 'not done');
     }
