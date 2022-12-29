@@ -1,7 +1,7 @@
 const core = require('@actions/core');
 const release = require('./release');
 const clearTrafficAllocationCache = require('./clearTrafficAllocationCache');
-const waitToWorkflowEnd = require('./waitToWorkflowEnd');
+const waitToWorkflowEnd = require('./waitWorkflowEnd');
 
 try {
   const circlecitoken = core.getInput('circlecitoken');

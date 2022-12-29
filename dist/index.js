@@ -6614,10 +6614,40 @@ module.exports = function release(
 
 /***/ }),
 
-/***/ 2728:
-/***/ ((module) => {
+/***/ 238:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-module.exports = eval("require")("./waitToWorkflowEnd");
+const fetch = __nccwpck_require__(467);
+
+
+// https://circleci.com/docs/workflows/#states
+const finished_statuses =["success", "not_run", "failed", "error" ,"canceled", "unauthorized"]
+let MAX_REQUESTS_LIMIT = 20;
+
+module.exports = function waitToWorkflowEnd(id, circlecitoken, secondsToRequestStatusAgain = 60){
+    MAX_REQUESTS_LIMIT-=1;
+
+    return fetch(`https://circleci.com/api/v2/pipeline/${id}/workflow`, {
+        headers: {
+            'Circle-Token':circlecitoken ,
+            'content-type': 'application/json',
+        },
+    }).then(r => r.json()).then(({items:[r]})=>{
+        console.log(r);
+      
+      if((finished_statuses.includes(r.status)) || MAX_REQUESTS_LIMIT === 0){ 
+        return r.status;
+      }
+      return new Promise((resolve, reject)=>{
+        console.log(`new request in ${secondsToRequestStatusAgain} seconds`)
+        setTimeout(()=>{
+          waitToWorkflowEnd(id).then(resolve).catch(reject);
+        }, 1000 * secondsToRequestStatusAgain) 
+      })
+    })
+  }
+  
+  // const in_progress_statuses = ["running", "not_run",  "on_hold" ]
 
 
 /***/ }),
@@ -6802,7 +6832,7 @@ var __webpack_exports__ = {};
 const core = __nccwpck_require__(2186);
 const release = __nccwpck_require__(4315);
 const clearTrafficAllocationCache = __nccwpck_require__(234);
-const waitToWorkflowEnd = __nccwpck_require__(2728);
+const waitToWorkflowEnd = __nccwpck_require__(238);
 
 try {
   const circlecitoken = core.getInput('circlecitoken');
