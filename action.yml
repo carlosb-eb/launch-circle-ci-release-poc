@@ -29,6 +29,14 @@ inputs:
     description: 'Author team slack channel name'
     required: true
     default: 'eb-ui'
+  clearCache:
+    description: 'Clears traffic allocation cache'
+    required: false
+    default: 'false'
+  ebApiKey:
+    description: 'EB API key'
+    required: false
+    default: ''
 outputs:
   result:
     description: 'The eb-ui circle-ci result'
