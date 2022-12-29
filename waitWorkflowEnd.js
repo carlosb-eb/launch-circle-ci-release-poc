@@ -7,14 +7,16 @@ let MAX_REQUESTS_LIMIT = 20;
 
 module.exports = function waitToWorkflowEnd(id, circlecitoken, secondsToRequestStatusAgain = 60){
     MAX_REQUESTS_LIMIT-=1;
+    console.log(`waitToWorkflowEnd will call with workflow id "${id}" and circlecitoken ${circlecitoken}`);
 
     return fetch(`https://circleci.com/api/v2/pipeline/${id}/workflow`, {
         headers: {
-            'Circle-Token':circlecitoken ,
+            'Circle-Token': circlecitoken ,
             'content-type': 'application/json',
         },
-    }).then(r => r.json()).then(({items:[r]})=>{
-        console.log(r);
+    }).then(r => r.json()).then((response)=>{
+      console.log('response: ', response);
+      const r = response.items[0];
       
       if((finished_statuses.includes(r.status)) || MAX_REQUESTS_LIMIT === 0){ 
         return r.status;
