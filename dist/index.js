@@ -6643,7 +6643,7 @@ module.exports = function waitToWorkflowEnd(id, circlecitoken, secondsToRequestS
       return new Promise((resolve, reject)=>{
         console.log(`new request in ${secondsToRequestStatusAgain} seconds`)
         setTimeout(()=>{
-          waitToWorkflowEnd(id).then(resolve).catch(reject);
+          waitToWorkflowEnd(id, circlecitoken, secondsToRequestStatusAgain).then(resolve).catch(reject);
         }, 1000 * secondsToRequestStatusAgain) 
       })
     })
