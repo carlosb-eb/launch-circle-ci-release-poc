@@ -1,5 +1,7 @@
 const core = require('@actions/core');
 const release = require('./release');
+const clearTrafficAllocationCache = require('./clearTrafficAllocationCache');
+const waitToWorkflowEnd = require('./waitToWorkflowEnd');
 
 try {
   const circlecitoken = core.getInput('circlecitoken');
@@ -10,13 +12,27 @@ try {
   const currentVersion = core.getInput('currentVersion');
   const author = core.getInput('author');
   const slackChannel = core.getInput('slackChannel');
+  
+  const clearCache = core.getInput('clearCache');
+  const EB_API_KEY = core.getInput('ebApiKey');
 
   console.log('Requesting the release to CircleCI...')
   
   release(env, app, bakePercentage, versionToRelease, currentVersion,author,slackChannel, circlecitoken).then(r => {
     console.log('Response:', r);
-    console.log('https://app.circleci.com/pipelines/github/eventbrite/eb-ui/' + r.number)
-    core.setOutput("result", 'deployed');
+    core.setOutput("deployed", 'done');
+
+    if(clearCache){
+      waitToWorkflowEnd(r.id, circlecitoken).then(r => {
+        clearTrafficAllocationCache(app,EB_API_KEY).then(()=>{
+          core.setOutput("cacheclear", 'done');
+        }).catch(()=>{
+          core.setFailed('EB API call to clear traffic allocation cache failed:' +  e);
+        })
+      });
+    }else{
+      core.setOutput("cacheclear", 'not done');
+    }
   }).catch((e)=>{
     console.log('Error:', e);
     core.setFailed('Circle CI HTTP request failed:' +  e);

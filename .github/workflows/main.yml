@@ -31,6 +31,10 @@ on:
         description: 'Author team slack channel name'
         required: true
         default: '#listings-build'
+      clearCache:
+        description: 'Clears traffic allocation cache'
+        required: false
+        default: 'false'
 jobs:
   release_through_circle_ci:
     runs-on: ubuntu-latest
@@ -48,6 +52,8 @@ jobs:
           currentVersion: ${{ github.event.inputs.currentVersion }}
           author: ${{ github.event.inputs.author }}
           slackChannel: ${{ github.event.inputs.slackChannel }}
+          clearCache: ${{ github.event.inputs.clearCache }}
+          ebApiKey: ${{ secrets.EBUI_API_KEY }}
       # Use the output from the `hello` step
       - name: Get the output time
         run: echo "The time was ${{ steps.hello.outputs.time }}"
