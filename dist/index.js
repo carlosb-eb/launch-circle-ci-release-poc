@@ -1,6 +1,20 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ 234:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const fetch = __nccwpck_require__(467);
+
+module.exports = function clearTrafficAllocationCache(applicationName, eventBriteToken){
+    console.log('Cleaning cache of application: ', applicationName)
+   return fetch(`https://www.eventbriteapi.com/v3/eb-ui/${applicationName}/?token=${eventBriteToken}`, {
+     method: 'DELETE' 
+   }).then(r =>r.json())
+}
+
+/***/ }),
+
 /***/ 7351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -6600,6 +6614,14 @@ module.exports = function release(
 
 /***/ }),
 
+/***/ 2728:
+/***/ ((module) => {
+
+module.exports = eval("require")("./waitToWorkflowEnd");
+
+
+/***/ }),
+
 /***/ 2877:
 /***/ ((module) => {
 
@@ -6779,6 +6801,8 @@ var __webpack_exports__ = {};
 (() => {
 const core = __nccwpck_require__(2186);
 const release = __nccwpck_require__(4315);
+const clearTrafficAllocationCache = __nccwpck_require__(234);
+const waitToWorkflowEnd = __nccwpck_require__(2728);
 
 try {
   const circlecitoken = core.getInput('circlecitoken');
@@ -6789,13 +6813,31 @@ try {
   const currentVersion = core.getInput('currentVersion');
   const author = core.getInput('author');
   const slackChannel = core.getInput('slackChannel');
+  
+  const clearCache = core.getInput('clearCache');
+  const EB_API_KEY = core.getInput('ebApiKey');
 
   console.log('Requesting the release to CircleCI...')
   
   release(env, app, bakePercentage, versionToRelease, currentVersion,author,slackChannel, circlecitoken).then(r => {
     console.log('Response:', r);
-    console.log('https://app.circleci.com/pipelines/github/eventbrite/eb-ui/' + r.number)
-    core.setOutput("result", 'deployed');
+    console.log('cache clear: ', clearCache)
+    if(clearCache==="true"){
+      console.log('waiting CircleCI workflow end');
+      waitToWorkflowEnd(r.id, circlecitoken).then(r => {
+        console.log(' CircleCI workflow finished');
+
+        clearTrafficAllocationCache(app,EB_API_KEY).then(()=>{
+          core.setOutput("cacheclear", 'done');
+        }).catch(()=>{
+          core.setFailed('EB API call to clear traffic allocation cache failed:' +  e);
+        })
+      }).catch((e)=>{
+        console.log(' CircleCI workflow ERROR: ', e);
+      });
+    }else{
+      core.setOutput("cacheclear", 'not done');
+    }
   }).catch((e)=>{
     console.log('Error:', e);
     core.setFailed('Circle CI HTTP request failed:' +  e);
