@@ -72,4 +72,8 @@ git tag -a -m "last commit message" v1.12
 uses: carlosb-eb/launch-circle-ci-release-poc@v1.12
 ```
 
-5. Commit & Push your changes.
+5. Commit & Push your changes with tags
+
+```bash
+git push origin main --follow-tags
+```
