@@ -42,7 +42,7 @@ jobs:
     steps:
       - name: Deploy through circle ci
         id: circle-ci
-        uses: carlosb-eb/launch-circle-ci-release-poc@v1.13
+        uses: carlosb-eb/launch-circle-ci-release-poc@v1.14
         with:
           circlecitoken: ${{ secrets.CIRCLE_CI_TOKEN }}
           env: ${{ github.event.inputs.env }}
