@@ -22,6 +22,7 @@ async function run() {
   - Environment: ${env}
   - App: ${app}
   - Version: ${versionToRelease}
+  - Traffic: ${bakePercentage}%
   - Current version: ${currentVersion}
   - Traffic allocation cache clean after release: ${clearCache}
   - Author: ${author}
