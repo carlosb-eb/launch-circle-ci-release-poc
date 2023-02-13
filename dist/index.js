@@ -6619,37 +6619,48 @@ module.exports = function release(
 
 const fetch = __nccwpck_require__(467);
 
-
 // https://circleci.com/docs/workflows/#states
-const finished_statuses =["success", "not_run", "failed", "error" ,"canceled", "unauthorized"]
+const finished_statuses = [
+  "success",
+  "not_run",
+  "failed",
+  "error",
+  "canceled",
+  "unauthorized"
+];
 let MAX_REQUESTS_LIMIT = 20;
 
-module.exports = function waitToWorkflowEnd(id, circlecitoken, secondsToRequestStatusAgain = 60){
-    MAX_REQUESTS_LIMIT-=1;
-    console.log(`waitToWorkflowEnd will call with workflow id "${id}" and circlecitoken ${circlecitoken}`);
+module.exports = function waitToWorkflowEnd(
+  id,
+  circlecitoken,
+  secondsToRequestStatusAgain = 60
+) {
+  MAX_REQUESTS_LIMIT -= 1;
 
-    return fetch(`https://circleci.com/api/v2/pipeline/${id}/workflow`, {
-        headers: {
-            'Circle-Token': circlecitoken ,
-            'content-type': 'application/json',
-        },
-    }).then(r => r.json()).then((response)=>{
-      console.log('response: ', response);
-      const r = response.items[0] || { status: 'running'};
-      
-      if(finished_statuses.includes(r.status) || MAX_REQUESTS_LIMIT === 0){ 
+  return fetch(`https://circleci.com/api/v2/pipeline/${id}/workflow`, {
+    headers: {
+      "Circle-Token": circlecitoken,
+      "content-type": "application/json"
+    }
+  })
+    .then((r) => r.json())
+    .then((response) => {
+      const r = response.items[0] || { status: "running" };
+
+      if (finished_statuses.includes(r.status) || MAX_REQUESTS_LIMIT === 0) {
         return r.status;
       }
-      return new Promise((resolve, reject)=>{
-        console.log(`new request in ${secondsToRequestStatusAgain} seconds`)
-        setTimeout(()=>{
-          waitToWorkflowEnd(id, circlecitoken, secondsToRequestStatusAgain).then(resolve).catch(reject);
-        }, 1000 * secondsToRequestStatusAgain) 
-      })
-    })
-  }
-  
-  // const in_progress_statuses = ["running", "not_run",  "on_hold" ]
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          waitToWorkflowEnd(id, circlecitoken, secondsToRequestStatusAgain)
+            .then(resolve)
+            .catch(reject);
+        }, 1000 * secondsToRequestStatusAgain);
+      });
+    });
+};
+
+// const in_progress_statuses = ["running", "not_run",  "on_hold" ]
 
 
 /***/ }),
@@ -6836,48 +6847,66 @@ const release = __nccwpck_require__(4315);
 const clearTrafficAllocationCache = __nccwpck_require__(234);
 const waitToWorkflowEnd = __nccwpck_require__(238);
 
-try {
-  const circlecitoken = core.getInput('circlecitoken');
-  const env = core.getInput('env');
-  const app = core.getInput('app');
-  const versionToRelease = core.getInput('versionToRelease');
-  const bakePercentage = core.getInput('bakePercentage');
-  const currentVersion = core.getInput('currentVersion');
-  const author = core.getInput('author');
-  const slackChannel = core.getInput('slackChannel');
-  
-  const clearCache = core.getInput('clearCache');
-  const EB_API_KEY = core.getInput('ebApiKey');
+async function run() {
+  const circlecitoken = core.getInput("circlecitoken");
+  const env = core.getInput("env");
+  const app = core.getInput("app");
+  const versionToRelease = core.getInput("versionToRelease");
+  const bakePercentage = core.getInput("bakePercentage");
+  const currentVersion = core.getInput("currentVersion");
+  const author = core.getInput("author");
+  const slackChannel = core.getInput("slackChannel");
+  const clearCache = core.getInput("clearCache");
+  const EB_API_KEY = core.getInput("ebApiKey");
 
-  console.log('Requesting the release to CircleCI...')
-  
-  release(env, app, bakePercentage, versionToRelease, currentVersion,author,slackChannel, circlecitoken).then(r => {
-    console.log('Response:', r);
-    console.log('cache clear: ', clearCache)
-    if(clearCache==="true"){
-      console.log('waiting CircleCI workflow end');
-      waitToWorkflowEnd(r.id, circlecitoken).then(r => {
-        console.log(' CircleCI workflow finished');
+  console.log("Requesting the release to CircleCI...");
+  console.log(`
+  ********************************************************************************
+  Release information:
+  - Environment: ${env}
+  - App: ${app}
+  - Version: ${versionToRelease}
+  - Current version: ${currentVersion}
+  - Traffic allocation cache clean after release: ${clearCache}
+  - Author: ${author}
+  ********************************************************************************
+  `);
 
-        clearTrafficAllocationCache(app,EB_API_KEY).then(()=>{
-          core.setOutput("cacheclear", 'done');
-        }).catch(()=>{
-          core.setFailed('EB API call to clear traffic allocation cache failed:' +  e);
-        })
-      }).catch((e)=>{
-        console.log(' CircleCI workflow ERROR: ', e);
-      });
-    }else{
-      core.setOutput("cacheclear", 'not done');
+  try {
+    const { id } = await release(
+      env,
+      app,
+      bakePercentage,
+      versionToRelease,
+      currentVersion,
+      author,
+      slackChannel,
+      circlecitoken
+    );
+
+    console.log(`
+    ********************************************************************************
+      - Circle-CI job url: https://circleci.com/api/v2/pipeline/${id}/workflow
+    ********************************************************************************`);
+
+    await waitToWorkflowEnd(id, circlecitoken);
+
+    if (clearCache === "true") {
+      console.log("Trying to clear the traffic allocation cache...");
+      await clearTrafficAllocationCache(app, EB_API_KEY);
+      console.log("Traffic allocation cache cleared successfully!");
     }
-  }).catch((e)=>{
-    console.log('Error:', e);
-    core.setFailed('Circle CI HTTP request failed:' +  e);
-  });
-  
-} catch (error) {
-  core.setFailed(error.message);
+    console.log(`
+    ********************************************************************************
+    -  Release completed!
+    ********************************************************************************`);
+  } catch (error) {
+    console.log("Error:", error);
+    core.setFailed("Release failed");
+  }
 }
+
+run();
 
 })();
 

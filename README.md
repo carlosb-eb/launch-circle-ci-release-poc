@@ -39,3 +39,37 @@ return octokit.request(
   }
 );
 ```
+
+## Development
+
+- Install dependencies:
+
+  ```bash
+  npm install
+  ```
+
+- Upgrade github action version:
+
+1. Do your changes, add your commits.
+
+2. Execute the build
+
+```bash
+npm run build
+```
+
+This will update the /dist/\* files.
+
+3. Tag the last commit (specifying "last commit message") with the version (Ex: v1.12)
+
+```bash
+git tag -a -m "last commit message" v1.12
+```
+
+4. Update the ./github/workflows/main.yml file to point to this version
+
+```yaml
+uses: carlosb-eb/launch-circle-ci-release-poc@v1.12
+```
+
+5. Commit & Push your changes.
