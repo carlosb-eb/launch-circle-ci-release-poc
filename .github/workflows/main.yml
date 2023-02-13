@@ -3,38 +3,38 @@ name: Release to PROD/QA CircleCI
 on:
   workflow_dispatch:
     inputs:
-      env:  
-        description: 'Environment'
+      env:
+        description: "Environment"
         required: true
-        default: 'production' # qa | prod
+        default: "production" # qa | prod
       app:
-        description: 'EB-UI application name'
+        description: "EB-UI application name"
         required: true
-        default: 'digital-content'
+        default: "digital-content"
       versionToRelease:
-        description: 'EB-UI application version to release'
+        description: "EB-UI application version to release"
         required: true
-        default: '6.18.3'
-      bakePercentage: 
-        description: 'Application version traffic allocation percentage'
+        default: "6.18.3"
+      bakePercentage:
+        description: "Application version traffic allocation percentage"
         required: true
-        default: '5' # 100 | 50 | 25 | 10 | 5
+        default: "5" # 100 | 50 | 25 | 10 | 5
       currentVersion:
-        description: 'EB-UI application current version'
+        description: "EB-UI application current version"
         required: true
-        default: '6.18.3'
-      author: 
-        description: 'Release author'
+        default: "6.18.3"
+      author:
+        description: "Release author"
         required: true
-        default: 'carlosb'
+        default: "carlosb"
       slackChannel:
-        description: 'Author team slack channel name'
+        description: "Author team slack channel name"
         required: true
-        default: '#listings-build'
+        default: "#listings-build"
       clearCache:
-        description: 'Clears traffic allocation cache'
+        description: "Clears traffic allocation cache"
         required: false
-        default: 'false'
+        default: "false"
 jobs:
   release_through_circle_ci:
     runs-on: ubuntu-latest
@@ -45,7 +45,7 @@ jobs:
         uses: carlosb-eb/launch-circle-ci-release-poc@v1.11
         with:
           circlecitoken: ${{ secrets.CIRCLE_CI_TOKEN }}
-          env:  ${{ github.event.inputs.env }}
+          env: ${{ github.event.inputs.env }}
           app: ${{ github.event.inputs.app }}
           versionToRelease: ${{ github.event.inputs.versionToRelease }}
           bakePercentage: ${{ github.event.inputs.bakePercentage }}
@@ -54,6 +54,3 @@ jobs:
           slackChannel: ${{ github.event.inputs.slackChannel }}
           clearCache: ${{ github.event.inputs.clearCache }}
           ebApiKey: ${{ secrets.EBUI_API_KEY }}
-      # Use the output from the `hello` step
-      - name: Get the output time
-        run: echo "The time was ${{ steps.hello.outputs.time }}"

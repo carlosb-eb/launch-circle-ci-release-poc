@@ -1,47 +1,65 @@
-const core = require('@actions/core');
-const release = require('./release');
-const clearTrafficAllocationCache = require('./clearTrafficAllocationCache');
-const waitToWorkflowEnd = require('./waitWorkflowEnd');
+const core = require("@actions/core");
+const release = require("./release");
+const clearTrafficAllocationCache = require("./clearTrafficAllocationCache");
+const waitToWorkflowEnd = require("./waitWorkflowEnd");
 
-try {
-  const circlecitoken = core.getInput('circlecitoken');
-  const env = core.getInput('env');
-  const app = core.getInput('app');
-  const versionToRelease = core.getInput('versionToRelease');
-  const bakePercentage = core.getInput('bakePercentage');
-  const currentVersion = core.getInput('currentVersion');
-  const author = core.getInput('author');
-  const slackChannel = core.getInput('slackChannel');
-  
-  const clearCache = core.getInput('clearCache');
-  const EB_API_KEY = core.getInput('ebApiKey');
+async function run() {
+  const circlecitoken = core.getInput("circlecitoken");
+  const env = core.getInput("env");
+  const app = core.getInput("app");
+  const versionToRelease = core.getInput("versionToRelease");
+  const bakePercentage = core.getInput("bakePercentage");
+  const currentVersion = core.getInput("currentVersion");
+  const author = core.getInput("author");
+  const slackChannel = core.getInput("slackChannel");
+  const clearCache = core.getInput("clearCache");
+  const EB_API_KEY = core.getInput("ebApiKey");
 
-  console.log('Requesting the release to CircleCI...')
-  
-  release(env, app, bakePercentage, versionToRelease, currentVersion,author,slackChannel, circlecitoken).then(r => {
-    console.log('Response:', r);
-    console.log('cache clear: ', clearCache)
-    if(clearCache==="true"){
-      console.log('waiting CircleCI workflow end');
-      waitToWorkflowEnd(r.id, circlecitoken).then(r => {
-        console.log(' CircleCI workflow finished');
+  console.log("Requesting the release to CircleCI...");
+  console.log(`
+  ********************************************************************************
+  Release information:
+  - Environment: ${env}
+  - App: ${app}
+  - Version: ${versionToRelease}
+  - Current version: ${currentVersion}
+  - Traffic allocation cache clean after release: ${clearCache}
+  - Author: ${author}
+  ********************************************************************************
+  `);
 
-        clearTrafficAllocationCache(app,EB_API_KEY).then(()=>{
-          core.setOutput("cacheclear", 'done');
-        }).catch(()=>{
-          core.setFailed('EB API call to clear traffic allocation cache failed:' +  e);
-        })
-      }).catch((e)=>{
-        console.log(' CircleCI workflow ERROR: ', e);
-      });
-    }else{
-      core.setOutput("cacheclear", 'not done');
+  try {
+    const { id } = await release(
+      env,
+      app,
+      bakePercentage,
+      versionToRelease,
+      currentVersion,
+      author,
+      slackChannel,
+      circlecitoken
+    );
+
+    console.log(`
+    ********************************************************************************
+      - Circle-CI job url: https://circleci.com/api/v2/pipeline/${id}/workflow
+    ********************************************************************************`);
+
+    await waitToWorkflowEnd(id, circlecitoken);
+
+    if (clearCache === "true") {
+      console.log("Trying to clear the traffic allocation cache...");
+      await clearTrafficAllocationCache(app, EB_API_KEY);
+      console.log("Traffic allocation cache cleared successfully!");
     }
-  }).catch((e)=>{
-    console.log('Error:', e);
-    core.setFailed('Circle CI HTTP request failed:' +  e);
-  });
-  
-} catch (error) {
-  core.setFailed(error.message);
+    console.log(`
+    ********************************************************************************
+    -  Release completed!
+    ********************************************************************************`);
+  } catch (error) {
+    console.log("Error:", error);
+    core.setFailed("Release failed");
+  }
 }
+
+run();
