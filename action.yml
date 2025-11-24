@@ -33,6 +33,10 @@ inputs:
     description: "Clears traffic allocation cache"
     required: false
     default: "false"
+  runE2ETests:
+    description: "Run E2E tests"
+    required: false
+    default: "true"
   ebApiKey:
     description: "EB API key"
     required: false
