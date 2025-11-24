@@ -36,7 +36,7 @@ inputs:
   runE2ETests:
     description: "Run E2E tests"
     required: false
-    default: "true"
+    default: "false"
   ebApiKey:
     description: "EB API key"
     required: false

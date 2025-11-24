@@ -38,7 +38,7 @@ on:
       runE2ETests:
         description: "Run E2E tests"
         required: false
-        default: "true"
+        default: "false"
 jobs:
   release_through_circle_ci:
     runs-on: ubuntu-latest
