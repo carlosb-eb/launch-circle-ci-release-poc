@@ -6857,6 +6857,7 @@ async function run() {
   const author = core.getInput("author");
   const slackChannel = core.getInput("slackChannel");
   const clearCache = core.getInput("clearCache");
+  const runE2ETests = core.getInput("runE2ETests");
   const EB_API_KEY = core.getInput("ebApiKey");
 
   console.log("Requesting the release to CircleCI...");
@@ -6869,6 +6870,7 @@ async function run() {
   - Traffic: ${bakePercentage}%
   - Current version: ${currentVersion}
   - Traffic allocation cache clean after release: ${clearCache}
+  - Run E2E tests: ${runE2ETests}
   - Author: ${author}
   ********************************************************************************
   `);
